@@ -1,3 +1,21 @@
+/**
+ *  Fully Kiosk Browser Controller.
+ * 	Allows user to interface with Fully API allowing for TTS and other functions. 
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License. You may obtain a copy of the License at:
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
+ *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
+ *  for the specific language governing permissions and limitations under the License.
+ *
+ *	Mar 22, 2019 Arn Burkhoff: Add chime command giving partial Lannouncer compatability.
+ *  Mar 22, 2019 Arn Burkhoff: Port to Smarthings from Hubitat
+ *	Mar 21, 2019 Gavin Campbell: Released on Hubitat
+ */
+
 metadata {
     definition (name: "Fully Kiosk Browser Controller", namespace: "GvnCampbell", author: "Gavin Campbell") {
 		capability "Tone"
@@ -12,7 +30,7 @@ metadata {
 
 	preferences {
 		input(name:"serverIP",type:"string",title:"Server IP Address",required:true,displayDuringSetup: true)
-		input(name:"serverPort",type:"string",title:"Server Port",defaultValue:2323,required:true,displayDuringSetup: true)
+		input(name:"serverPort",type:"string",title:"Server Port",defaultValue:"2323",required:true,displayDuringSetup: true)
 		input(name:"serverPassword",type:"string",title:"Server Password",required:true,displayDuringSetup: true)
 		input(name:"toneFile",type:"string",title:"Tone Audio File URL",required:false,displayDuringSetup: true)
 		input(name:"appPackage",type:"string",title:"Application to Launch",required:false,displayDuringSetup: true)
