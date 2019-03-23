@@ -11,30 +11,36 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
- *	Mar 22, 2019 Arn Burkhoff: Add chime command giving partial Lannouncer compatability.
- *  Mar 22, 2019 Arn Burkhoff: Port to Smarthings from Hubitat
- *	Mar 21, 2019 Gavin Campbell: Released on Hubitat
+ *	Mar 23, 2019 V1.04 Arn Burkhoff: Update to 1.04 hubitat version level.
+ *	Mar 22, 2019 V1.00 Arn Burkhoff: Add chime command giving partial Lannouncer compatability.
+ *  Mar 22, 2019 v1.00 Arn Burkhoff: Port to Smarthings from Hubitat
+ *	Mar 21, 2019 V1.00 Gavin Campbell: Released on Hubitat
  */
-
 metadata {
-    definition (name: "Fully Kiosk Browser Controller", namespace: "GvnCampbell", author: "Gavin Campbell") {
+    definition (name: "Fully Kiosk Browser Controller", namespace: "GvnCampbell", author: "Gavin Campbell", importUrl: "https://github.com/GvnCampbell/Hubitat/blob/master/Drivers/FullyKioskBrowserController.groovy") {
 		capability "Tone"
 		capability "Speech Synthesis"
 		capability "AudioVolume"
         capability "Refresh"
-        command "chime"
-        command "doorbell"
+		capability "Actuator"
 		command "launchAppPackage"
 		command "bringFullyToFront"
+		command "screenOn"
+		command "screenOff"
+		command "triggerMotion"
+		command "startScreensaver"
+		command "stopScreensaver"
+		command "loadURL",["String"]
+		command "loadStartURL"
+        command "chime"
     }
-
 	preferences {
-		input(name:"serverIP",type:"string",title:"Server IP Address",required:true,displayDuringSetup: true)
-		input(name:"serverPort",type:"string",title:"Server Port",defaultValue:"2323",required:true,displayDuringSetup: true)
-		input(name:"serverPassword",type:"string",title:"Server Password",required:true,displayDuringSetup: true)
-		input(name:"toneFile",type:"string",title:"Tone Audio File URL",required:false,displayDuringSetup: true)
-		input(name:"appPackage",type:"string",title:"Application to Launch",required:false,displayDuringSetup: true)
-		input(name:"loggingLevel",type:"enum",title:"Logging Level",description:"Set the level of logging.",options:["none","debug","trace","info","warn","error"],defaultValue:"debug",required:true,displayDuringSetup: true)
+		input(name:"serverIP",type:"string",title:"Server IP Address",defaultValue:"",required:true)
+		input(name:"serverPort",type:"string",title:"Server Port",defaultValue:"2323",required:true)
+		input(name:"serverPassword",type:"string",title:"Server Password",defaultValue:"",required:true)
+		input(name:"toneFile",type:"string",title:"Tone Audio File URL",defaultValue:"",required:false)
+		input(name:"appPackage",type:"string",title:"Application to Launch",defaultValue:"",required:false)
+		input(name:"loggingLevel",type:"enum",title:"Logging Level",description:"Set the level of logging.",options:["none","debug","trace","info","warn","error"],defaultValue:"debug",required:true)
     }
     tiles
     	{
@@ -48,7 +54,7 @@ metadata {
         	}
     	}
 
-	}
+}
 
 // *** [ Initialization Methods ] *********************************************
 def installed() {
@@ -67,8 +73,7 @@ def initialize() {
 }
 
 // *** [ Device Methods ] *****************************************************
-def doorbell() {}
-def beep(text="Fully Kiosk Device Handler") {
+def beep() {
 	def logprefix = "[beep] "
     logger(logprefix,"trace")
 	sendCommandPost("cmd=playSound&url=${toneFile}")
@@ -84,7 +89,42 @@ def bringFullyToFront() {
     logger(logprefix,"trace")
 	sendCommandPost("cmd=toForeground")
 }
-def speak(text="Fully Kiosk TTS Device Handler") {
+def screenOn() {
+	def logprefix = "[screenOn] "
+    logger(logprefix,"trace")
+	sendCommandPost("cmd=screenOn")
+}
+def screenOff() {
+	def logprefix = "[screenOff] "
+    logger(logprefix,"trace")
+	sendCommandPost("cmd=screenOff")
+}
+def triggerMotion() {
+	def logprefix = "[triggerMotion] "
+    logger(logprefix,"trace")
+	sendCommandPost("cmd=triggerMotion")
+}
+def startScreensaver() {
+	def logprefix = "[startScreensaver] "
+    logger(logprefix,"trace")
+	sendCommandPost("cmd=startScreensaver")
+}
+def stopScreensaver() {
+	def logprefix = "[stopScreensaver] "
+    logger(logprefix,"trace")
+	sendCommandPost("cmd=stopScreensaver")
+}
+def loadURL(url) {
+	def logprefix = "[loadURL] "
+	logger(logprefix+"url:${url}","trace")
+	sendCommandPost("cmd=loadURL&url=${url}")
+}
+def loadStartURL() {
+	def logprefix = "[loadStartURL] "
+	logger(logprefix,"trace")
+	sendCommandPost("cmd=loadStartURL")
+}
+def speak(text) {
 	def logprefix = "[speak] "
 	logger(logprefix+"text:${text}","trace")
 	sendCommandPost("cmd=textToSpeech&text=${java.net.URLEncoder.encode(text, "UTF-8")}")
@@ -132,7 +172,7 @@ def refresh() {
 }
 
 // *** [ Communication Methods ] **********************************************
-/*	HE Methods
+/*
 def sendCommandPost(cmdDetails="") {
 	def logprefix = "[sendCommandPost] "
 	logger(logprefix+"cmdDetails:${cmdDetails}","trace")
@@ -157,6 +197,7 @@ def sendCommandCallback(response, data) {
 	}
 }
 */
+
 //	[SmartThing Communications] *********************************************** 
 def sendCommandPost(cmdDetails="") 
 	{
@@ -179,6 +220,7 @@ def sendCommandPost(cmdDetails="")
         return hubAction
 		}
 	}
+
 private String convertIPtoHex(ipAddress) { 
     String hex = ipAddress.tokenize( '.' ).collect {  String.format( '%02X', it.toInteger() ) }.join()
 //    log.debug "IP address entered is $ipAddress and the converted hex code is $hex"
@@ -190,7 +232,6 @@ private String convertPortToHex(port) {
 //    log.debug hexport
     return hexport
 }	
-
 // *** [ Logger ] *************************************************************
 private logger(loggingText,loggingType="debug") {
 	def internalLogging = false
