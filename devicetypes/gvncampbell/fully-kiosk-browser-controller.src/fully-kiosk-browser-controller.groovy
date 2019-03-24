@@ -11,16 +11,21 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
+ *	Mar 24, 2019 V2.00 Arn Burkhoff: Compatability with SmartThings and Hubitat in a single module instance
  *	Mar 24, 2019 V1.05 Arn Burkhoff: Update to 1.05 Hubitat version level. Add setScreenBrightness
  *	Mar 23, 2019 V1.04 Arn Burkhoff: Update to 1.04 Hubitat version level.
  *	Mar 22, 2019 V1.00 Arn Burkhoff: Add chime command giving partial Lannouncer compatability.
  *  Mar 22, 2019 v1.00 Arn Burkhoff: Port to Smarthings from Hubitat
  *	Mar 21, 2019 V1.00 Gavin Campbell: Released on Hubitat
  */
+
 metadata {
     definition (name: "Fully Kiosk Browser Controller", namespace: "GvnCampbell", author: "Gavin Campbell", importUrl: "https://github.com/GvnCampbell/Hubitat/blob/master/Drivers/FullyKioskBrowserController.groovy") {
 		capability "Tone"
-		capability "Speech Synthesis"
+		if (isSmartThings())
+			capability "Speech Synthesis"
+		else
+			capability "SpeechSynthesis"
 		capability "AudioVolume"
         capability "Refresh"
 		capability "Actuator"
@@ -44,18 +49,20 @@ metadata {
 		input(name:"appPackage",type:"string",title:"Application to Launch",defaultValue:"",required:false)
 		input(name:"loggingLevel",type:"enum",title:"Logging Level",description:"Set the level of logging.",options:["none","debug","trace","info","warn","error"],defaultValue:"debug",required:true)
     }
-    tiles
-    	{
-        standardTile("speak", "device.speech", inactiveLabel: false, decoration: "flat") 
-        	{
-            state "default", label:'Speak', action:"Speech Synthesis.speak", icon:"st.Electronics.electronics13"
-        	}
-        standardTile("beep", "device.tone", inactiveLabel: false, decoration: "flat")
-        	{
-            state "default", label:'Tone', action:"tone.beep", icon:"st.Entertainment.entertainment2"
-        	}
-    	}
-
+	if (isSmartThings())
+		{
+		tiles
+			{
+			standardTile("speak", "device.speech", inactiveLabel: false, decoration: "flat") 
+				{
+				state "default", label:'Speak', action:"Speech Synthesis.speak", icon:"st.Electronics.electronics13"
+				}
+			standardTile("beep", "device.tone", inactiveLabel: false, decoration: "flat")
+				{
+				state "default", label:'Tone', action:"tone.beep", icon:"st.Entertainment.entertainment2"
+				}
+			}
+		}
 }
 
 // *** [ Initialization Methods ] *********************************************
@@ -178,10 +185,30 @@ def refresh() {
 	sendCommandPost("cmd=deviceInfo")
 }
 
+// *** [ Platform Determination Methods ] *************************************
+private isSmartThings()
+	{ 
+	return (physicalgraph?.device?.HubAction)
+	}
+private isHubitat() 
+	{ 
+	return (hubitat?.device?.HubAction)
+	}
+
 // *** [ Communication Methods ] **********************************************
-/*
-def sendCommandPost(cmdDetails="") {
-	def logprefix = "[sendCommandPost] "
+def sendCommandPost(cmdDetails="")
+	{
+  	def logprefix = "[sendCommandPost] "
+  	logger logprefix
+	if (isSmartThings())
+		STsendCommandPost(cmdDetails)
+	else
+		HEsendCommandPost(cmdDetails)
+	}
+
+// [Hubitat Communications]****************************************************
+def HEsendCommandPost(cmdDetails="") {
+	def logprefix = "[HEsendCommandPost] "
 	logger(logprefix+"cmdDetails:${cmdDetails}","trace")
 	def postParams = [
 		uri: "http://${serverIP}:${serverPort}/?type=json&password=${serverPassword}&${cmdDetails}",
@@ -203,12 +230,11 @@ def sendCommandCallback(response, data) {
 		}
 	}
 }
-*/
 
 //	[SmartThing Communications] *********************************************** 
-def sendCommandPost(cmdDetails="") 
+def STsendCommandPost(cmdDetails="") 
 	{
-	def logprefix = "[sendCommandPost] "
+	def logprefix = "[STsendCommandPost] "
 	logger(logprefix+"cmdDetails:${cmdDetails} to ${serverIP}:${serverPort}","trace")
     if (serverIP?.trim()) 
     	{
@@ -218,7 +244,7 @@ def sendCommandPost(cmdDetails="")
         def headers = [:] 
         headers.put("HOST", "$serverIP:$serverPort")
         def method = "POST"
-        def hubAction = new physicalgraph.device.HubAction(
+	    def hubAction = physicalgraph.device.HubAction.newInstance(
             method: method,
             path: "/?type=json&password=${serverPassword}&${cmdDetails}",
             headers: headers
