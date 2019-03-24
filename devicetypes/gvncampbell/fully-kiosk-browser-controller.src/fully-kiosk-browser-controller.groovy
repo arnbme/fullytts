@@ -131,7 +131,7 @@ def loadStartURL() {
 	logger(logprefix,"trace")
 	sendCommandPost("cmd=loadStartURL")
 }
-def speak(text) {
+def speak(text="Fully Kiosk TTS Device Handler") {
 	def logprefix = "[speak] "
 	logger(logprefix+"text:${text}","trace")
 	sendCommandPost("cmd=textToSpeech&text=${java.net.URLEncoder.encode(text, "UTF-8")}")
