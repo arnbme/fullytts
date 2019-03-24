@@ -11,7 +11,8 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
- *	Mar 23, 2019 V1.04 Arn Burkhoff: Update to 1.04 hubitat version level.
+ *	Mar 24, 2019 V1.05 Arn Burkhoff: Update to 1.05 Hubitat version level. Add setScreenBrightness
+ *	Mar 23, 2019 V1.04 Arn Burkhoff: Update to 1.04 Hubitat version level.
  *	Mar 22, 2019 V1.00 Arn Burkhoff: Add chime command giving partial Lannouncer compatability.
  *  Mar 22, 2019 v1.00 Arn Burkhoff: Port to Smarthings from Hubitat
  *	Mar 21, 2019 V1.00 Gavin Campbell: Released on Hubitat
@@ -32,6 +33,7 @@ metadata {
 		command "stopScreensaver"
 		command "loadURL",["String"]
 		command "loadStartURL"
+		command "setScreenBrightness",["Number"]
         command "chime"
     }
 	preferences {
@@ -98,6 +100,11 @@ def screenOff() {
 	def logprefix = "[screenOff] "
     logger(logprefix,"trace")
 	sendCommandPost("cmd=screenOff")
+}
+def setScreenBrightness(value) {
+	def logprefix = "[setScreenBrightness] "
+	logger(logprefix+"value:${value}","trace")
+	sendCommandPost("cmd=setStringSetting&key=screenBrightness&value=${value}")
 }
 def triggerMotion() {
 	def logprefix = "[triggerMotion] "
