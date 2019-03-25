@@ -23,7 +23,10 @@ metadata {
     definition (name: "Fully Kiosk Browser Controller", namespace: "GvnCampbell", author: "Gavin Campbell", importUrl: "https://github.com/GvnCampbell/Hubitat/blob/master/Drivers/FullyKioskBrowserController.groovy") {
 		capability "Tone"
 		if (isSmartThings())
+			{
 			capability "Speech Synthesis"
+			attribute "volume", "Number"
+			}
 		else
 			capability "SpeechSynthesis"
 		capability "AudioVolume"
@@ -53,18 +56,83 @@ metadata {
 		{
 		tiles
 			{
+			standardTile("screenOn", "device.switch", inactiveLabel: false, decoration: "flat") 
+				{
+				state "default", label:'Screen On', action:"screenOn", backgroundColor: "#00a0dc"
+				}
+			controlTile("levelSliderControl", "device.level", "slider", height: 1,
+	             width: 1, inactiveLabel: false, range:"(0..255)")
+	            {
+			    state "default", action:"setScreenBrightness", label:"Screen Brightness"
+				}
+			standardTile("screenOff", "device.switch", inactiveLabel: false, decoration: "flat") 
+				{
+				state "default", label:'Screen Off', action:"screenOff", backgroundColor: "#ffffff"
+				}
 			standardTile("speak", "device.speech", inactiveLabel: false, decoration: "flat") 
 				{
 				state "default", label:'Speak', action:"Speech Synthesis.speak", icon:"st.Electronics.electronics13"
 				}
 			standardTile("beep", "device.tone", inactiveLabel: false, decoration: "flat")
 				{
-				state "default", label:'Tone', action:"tone.beep", icon:"st.Entertainment.entertainment2"
+				state "default", label:'Play Beep', action:'beep', inactiveLabel:false, decoration: "flat"
+				}
+			standardTile("launchapp", "device.speech", inactiveLabel: false, decoration: "flat") 
+				{
+				state "default", label:'Launch App', action:"launchAppPackage"
+				}
+			standardTile("fullyfront", "device.speech", inactiveLabel: false, decoration: "flat") 
+				{
+				state "default", label:'Fully to Front', action:"bringFullyToFront"
+				}
+			standardTile("setmotion", "device.speech", inactiveLabel: false, decoration: "flat") 
+				{
+				state "default", label:'Trigger Motion', action:"triggerMotion"
+				}
+			standardTile("saverOn", "device.switch", inactiveLabel: false, decoration: "flat") 
+				{
+				state "default", label:'Screen Saver On', action:"startScreensaver", backgroundColor: "#00a0dc"
+				}
+			standardTile("saverOff", "device.switch", inactiveLabel: false, decoration: "flat") 
+				{
+				state "default", label:'Screen Saver Off', action:"stopScreensaver"
+				}
+			standardTile("loadUrl", "device.switch", inactiveLabel: false, decoration: "flat") 
+				{
+				state "default", label:'Load Url', action:"loadURL"
+				}
+			standardTile("loadStartUrl", "device.switch", inactiveLabel: false, decoration: "flat") 
+				{
+				state "default", label:'Load Start URL', action:"loadStartURL"
+				}
+			standardTile("Mute", "device.switch", inactiveLabel: false, decoration: "flat") 
+				{
+				state "default", label:'Mute', action:"mute"
+				}
+			standardTile("Unmute", "device.switch", inactiveLabel: false, decoration: "flat") 
+				{
+				state "default", label:'UnMute', action:"unmute"
+				}
+			standardTile("volumeup", "device.speech", inactiveLabel: false, decoration: "flat") 
+				{
+				state "default", label:'Volume up 10%', action:"volumeUp"
+				}
+			controlTile("volumeSliderControl", "device.volume", "slider", height: 1,
+	             width: 1, inactiveLabel: false, range:"(0..100)")
+	            {
+			    state "volume", action:"setVolume", label:"${currentValue}"
+				}
+			standardTile("volumedown", "device.speech", inactiveLabel: false, decoration: "flat") 
+				{
+				state "default", label:'Volume down 10%', action:"volumeDown"
+				}
+			standardTile("refresh", "device.speech", inactiveLabel: false, decoration: "flat") 
+				{
+				state "default", label:'Screen Refresh', action:"refresh"
 				}
 			}
-		}
-}
-
+		}	
+	}
 // *** [ Initialization Methods ] *********************************************
 def installed() {
 	def logprefix = "[installed] "
@@ -128,7 +196,7 @@ def stopScreensaver() {
     logger(logprefix,"trace")
 	sendCommandPost("cmd=stopScreensaver")
 }
-def loadURL(url) {
+def loadURL(url='google.com') {
 	def logprefix = "[loadURL] "
 	logger(logprefix+"url:${url}","trace")
 	sendCommandPost("cmd=loadURL&url=${url}")
