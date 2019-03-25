@@ -125,7 +125,7 @@ def setLevel(value) {
     def newValue = Math.floor((255 / 100) * value).trunc()
 	logger(logprefix+"value:${newValue}","trace")
     setScreenBrightness("${newValue}")
-    sendEvent(name: "levelSliderControl", value: "${value}")
+    sendEvent(name: "level", value: "${value}")
 }
 def triggerMotion() {
 	def logprefix = "[triggerMotion] "
@@ -272,7 +272,7 @@ def parse(description) {
     
     def brightnessPercentage = Math.floor((brightness.toInteger()/255) * 100).trunc()
     logger(logprefix+"brightnessPercentage: ${brightnessPercentage}","trace")
-    def evt1 = createEvent(name: "levelSliderControl", value: "${brightness}")
+    def evt1 = createEvent(name: "level", value: "${brightnessPercentage}")
     return evt1
 }
 
