@@ -19,6 +19,7 @@
  */
 metadata {
     definition (name: "Fully Kiosk Browser Controller", namespace: "GvnCampbell", author: "Gavin Campbell", importUrl: "https://github.com/GvnCampbell/Hubitat/blob/master/Drivers/FullyKioskBrowserController.groovy") {
+		capability "Switch Level"
 		capability "Tone"
 		capability "Speech Synthesis"
 		capability "AudioVolume"
@@ -44,18 +45,28 @@ metadata {
 		input(name:"appPackage",type:"string",title:"Application to Launch",defaultValue:"",required:false)
 		input(name:"loggingLevel",type:"enum",title:"Logging Level",description:"Set the level of logging.",options:["none","debug","trace","info","warn","error"],defaultValue:"debug",required:true)
     }
-    tiles
-    	{
-        standardTile("speak", "device.speech", inactiveLabel: false, decoration: "flat") 
+    tiles(scale: 2) {
+        standardTile("speak", "device.speech", height: 2, width: 2, inactiveLabel: false, decoration: "flat") 
         	{
             state "default", label:'Speak', action:"Speech Synthesis.speak", icon:"st.Electronics.electronics13"
         	}
-        standardTile("beep", "device.tone", inactiveLabel: false, decoration: "flat")
+        standardTile("beep", "device.tone", height: 2, width: 2, inactiveLabel: false, decoration: "flat")
         	{
             state "default", label:'Tone', action:"tone.beep", icon:"st.Entertainment.entertainment2"
-        	}
-    	}
-
+        	}   	
+		controlTile("levelSliderControl", "device.level", "slider",  height: 4, width: 2, inactiveLabel: false, decoration: "flat") 
+        	{
+		    state "level", label:"Screen Brightness", action:"switch level.setLevel"
+			}
+        standardTile("refresh", "device.switch", inactiveLabel: false, decoration: "flat", width: 2, height: 2) 
+        	{
+            state "default", label: "", action: "refresh.refresh", icon: "st.secondary.refresh"
+        	}	
+		
+         
+        main('speak')
+        details('levelSliderControl', 'speak', 'refresh', 'beep')
+    }
 }
 
 // *** [ Initialization Methods ] *********************************************
@@ -72,6 +83,8 @@ def updated() {
 def initialize() {
 	def logprefix = "[initialize] "
     logger logprefix
+    
+    refresh()
 }
 
 // *** [ Device Methods ] *****************************************************
@@ -105,6 +118,14 @@ def setScreenBrightness(value) {
 	def logprefix = "[setScreenBrightness] "
 	logger(logprefix+"value:${value}","trace")
 	sendCommandPost("cmd=setStringSetting&key=screenBrightness&value=${value}")
+}
+def setLevel(value) {
+	def logprefix = "[setLevel] "
+	logger(logprefix+"value:${value}","trace")
+    def newValue = Math.floor((255 / 100) * value).trunc()
+	logger(logprefix+"value:${newValue}","trace")
+    setScreenBrightness("${newValue}")
+    sendEvent(name: "levelSliderControl", value: "${value}")
 }
 def triggerMotion() {
 	def logprefix = "[triggerMotion] "
@@ -217,16 +238,43 @@ def sendCommandPost(cmdDetails="")
         device.deviceNetworkId = "$hosthex:$porthex"
         def headers = [:] 
         headers.put("HOST", "$serverIP:$serverPort")
+        headers.put("Content-Type", "application/json")
         def method = "POST"
+   
         def hubAction = new physicalgraph.device.HubAction(
             method: method,
             path: "/?type=json&password=${serverPassword}&${cmdDetails}",
             headers: headers
             );
-		logger(logprefix+"hubAction: ${hubAction}","trace")
+        logger(logprefix+"hubAction: ${hubAction}","trace")
         return hubAction
 		}
 	}
+
+def parse(description) {
+	def logprefix = "[parse] "
+	logger(logprefix+"description: ${description}","trace")
+    
+    def msg = parseLanMessage(description)
+    
+    def headersAsString = msg.header // => headers as a string
+    def headerMap = msg.headers      // => headers as a Map
+    def body = msg.body              // => request body as a string
+    def status = msg.status          // => http status code of the response
+    
+    logger(logprefix+"headersAsString: ${headersAsString}","trace")
+	
+    def json = new groovy.json.JsonSlurper().parseText(body)  
+	def brightness = json.screenBrightness
+    
+    logger(logprefix+"json: ${json}","trace")
+    logger(logprefix+"brightness: ${json.screenBrightness}","trace")
+    
+    def brightnessPercentage = Math.floor((brightness.toInteger()/255) * 100).trunc()
+    logger(logprefix+"brightnessPercentage: ${brightnessPercentage}","trace")
+    def evt1 = createEvent(name: "levelSliderControl", value: "${brightness}")
+    return evt1
+}
 
 private String convertIPtoHex(ipAddress) { 
     String hex = ipAddress.tokenize( '.' ).collect {  String.format( '%02X', it.toInteger() ) }.join()
