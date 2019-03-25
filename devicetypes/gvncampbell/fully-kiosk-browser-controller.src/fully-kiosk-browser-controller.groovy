@@ -11,6 +11,7 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
+ *	Mar 25, 2019 V2.00 Arn Burkhoff: Add some really messed up Tiles code, it mostly works.
  *	Mar 24, 2019 V2.00 Arn Burkhoff: Compatability with SmartThings and Hubitat in a single module instance
  *	Mar 24, 2019 V1.05 Arn Burkhoff: Update to 1.05 Hubitat version level. Add setScreenBrightness
  *	Mar 23, 2019 V1.04 Arn Burkhoff: Update to 1.04 Hubitat version level.
@@ -25,7 +26,6 @@ metadata {
 		if (isSmartThings())
 			{
 			capability "Speech Synthesis"
-			attribute "volume", "Number"
 			}
 		else
 			capability "SpeechSynthesis"
@@ -120,7 +120,7 @@ metadata {
 			controlTile("volumeSliderControl", "device.volume", "slider", height: 1,
 	             width: 1, inactiveLabel: false, range:"(0..100)")
 	            {
-			    state "volume", action:"setVolume", label:"${currentValue}"
+			    state "volume", action:"setVolume", label:'${currentValue}'
 				}
 			standardTile("volumedown", "device.speech", inactiveLabel: false, decoration: "flat") 
 				{
@@ -216,10 +216,10 @@ def speak(text="Fully Kiosk TTS Device Handler") {
 def setVolume(volumeLevel) {
 	def logprefix = "[setVolume] "
 	logger(logprefix+"volumeLevel:${volumeLevel}")
+	sendEvent([name:"volume",value:volumeLevel])
 	for (i=1;i<=10;i++) {
 		sendCommandPost("cmd=setAudioVolume&level=${volumeLevel}&stream=${i}")
 	}
-	sendEvent([name:"volume",value:volumeLevel])
 }
 def volumeUp() {
 	def logprefix = "[volumeUp] "
