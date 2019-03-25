@@ -21,6 +21,7 @@
 
 metadata {
     definition (name: "Fully Kiosk Browser Controller", namespace: "GvnCampbell", author: "Gavin Campbell", importUrl: "https://github.com/GvnCampbell/Hubitat/blob/master/Drivers/FullyKioskBrowserController.groovy") {
+		capability "Switch Level"
 		capability "Tone"
 		if (isSmartThings())
 			{
@@ -126,13 +127,20 @@ metadata {
 				{
 				state "default", label:'Volume down 10%', action:"volumeDown"
 				}
+			controlTile("levelSliderControl", "device.level", "slider",  height: 4, width: 2, inactiveLabel: false, decoration: "flat") 
+	        	{
+			    state "level", label:"Screen Brightness", action:"switch level.setLevel"
+				}
+       
 			standardTile("refresh", "device.speech", inactiveLabel: false, decoration: "flat") 
 				{
 				state "default", label:'Screen Refresh', action:"refresh"
 				}
 			}
 		}	
-	}
+	}   
+}
+
 // *** [ Initialization Methods ] *********************************************
 def installed() {
 	def logprefix = "[installed] "
@@ -147,6 +155,8 @@ def updated() {
 def initialize() {
 	def logprefix = "[initialize] "
     logger logprefix
+    
+    refresh()
 }
 
 // *** [ Device Methods ] *****************************************************
@@ -180,6 +190,14 @@ def setScreenBrightness(value) {
 	def logprefix = "[setScreenBrightness] "
 	logger(logprefix+"value:${value}","trace")
 	sendCommandPost("cmd=setStringSetting&key=screenBrightness&value=${value}")
+}
+def setLevel(value) {
+	def logprefix = "[setLevel] "
+	logger(logprefix+"value:${value}","trace")
+    def newValue = Math.floor((255 / 100) * value).trunc()
+	logger(logprefix+"value:${newValue}","trace")
+    setScreenBrightness("${newValue}")
+    sendEvent(name: "level", value: "${value}")
 }
 def triggerMotion() {
 	def logprefix = "[triggerMotion] "
@@ -311,16 +329,42 @@ def STsendCommandPost(cmdDetails="")
         device.deviceNetworkId = "$hosthex:$porthex"
         def headers = [:] 
         headers.put("HOST", "$serverIP:$serverPort")
+        headers.put("Content-Type", "application/json")
         def method = "POST"
 	    def hubAction = physicalgraph.device.HubAction.newInstance(
             method: method,
             path: "/?type=json&password=${serverPassword}&${cmdDetails}",
             headers: headers
             );
-		logger(logprefix+"hubAction: ${hubAction}","trace")
+        logger(logprefix+"hubAction: ${hubAction}","trace")
         return hubAction
 		}
 	}
+
+def parse(description) {
+	def logprefix = "[parse] "
+	logger(logprefix+"description: ${description}","trace")
+    
+    def msg = parseLanMessage(description)
+    
+    def headersAsString = msg.header // => headers as a string
+    def headerMap = msg.headers      // => headers as a Map
+    def body = msg.body              // => request body as a string
+    def status = msg.status          // => http status code of the response
+    
+    logger(logprefix+"headersAsString: ${headersAsString}","trace")
+	
+    def json = new groovy.json.JsonSlurper().parseText(body)  
+	def brightness = json.screenBrightness
+    
+    logger(logprefix+"json: ${json}","trace")
+    logger(logprefix+"brightness: ${json.screenBrightness}","trace")
+    
+    def brightnessPercentage = Math.floor((brightness.toInteger()/255) * 100).trunc()
+    logger(logprefix+"brightnessPercentage: ${brightnessPercentage}","trace")
+    def evt1 = createEvent(name: "level", value: "${brightnessPercentage}")
+    return evt1
+}
 
 private String convertIPtoHex(ipAddress) { 
     String hex = ipAddress.tokenize( '.' ).collect {  String.format( '%02X', it.toInteger() ) }.join()
