@@ -60,10 +60,10 @@ metadata {
 				{
 				state "default", label:'Screen On', action:"screenOn", backgroundColor: "#00a0dc"
 				}
-			controlTile("levelSliderControl", "device.level", "slider", height: 1,
+			controlTile("levelSliderControl", "device.levelx", "slider", height: 1,
 	             width: 1, inactiveLabel: false, range:"(0..255)")
 	            {
-			    state "default", action:"setScreenBrightness", label:"Screen Brightness"
+			    state "levelx", action:"setScreenBrightness", label:'${currentValue}'
 				}
 			standardTile("screenOff", "device.switch", inactiveLabel: false, decoration: "flat") 
 				{
@@ -179,7 +179,9 @@ def screenOff() {
 def setScreenBrightness(value) {
 	def logprefix = "[setScreenBrightness] "
 	logger(logprefix+"value:${value}","trace")
+	sendEvent([name:"levelx",value:value])
 	sendCommandPost("cmd=setStringSetting&key=screenBrightness&value=${value}")
+
 }
 def triggerMotion() {
 	def logprefix = "[triggerMotion] "
