@@ -11,12 +11,13 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
- *	Mar 25, 2019 V2.00 Arn Burkhoff: Add some really messed up Tiles code, it mostly works.
- *	Mar 24, 2019 V2.00 Arn Burkhoff: Compatability with SmartThings and Hubitat in a single module instance
- *	Mar 24, 2019 V1.05 Arn Burkhoff: Update to 1.05 Hubitat version level. Add setScreenBrightness
- *	Mar 23, 2019 V1.04 Arn Burkhoff: Update to 1.04 Hubitat version level.
- *	Mar 22, 2019 V1.00 Arn Burkhoff: Add chime command giving partial Lannouncer compatability.
- *  Mar 22, 2019 v1.00 Arn Burkhoff: Port to Smarthings from Hubitat
+ *	Mar 25, 2019       Arn Burkhoff: Add some really messed up Tiles code, it mostly works.
+ *										note keep sendEvent before the sendCommand slider does not impact remotte device
+ *	Mar 24, 2019 	   Arn Burkhoff: Compatability with SmartThings and Hubitat in a single module instance
+ *	Mar 24, 2019 V1.05 Gavin Campbell: Update to 1.05 Hubitat version level. Add setScreenBrightness
+ *	Mar 23, 2019 V1.04 Gavin Campbell: Update to 1.04 Hubitat version level.
+ *	Mar 22, 2019 	   Arn Burkhoff: Add chime command giving partial Lannouncer compatability.
+ *  Mar 22, 2019 	   Arn Burkhoff: Port to Smarthings from Hubitat
  *	Mar 21, 2019 V1.00 Gavin Campbell: Released on Hubitat
  */
 
@@ -120,7 +121,7 @@ metadata {
 			controlTile("volumeSliderControl", "device.volume", "slider", height: 1,
 	             width: 1, inactiveLabel: false, range:"(0..100)")
 	            {
-			    state "volume", action:"setVolume", label:'${currentValue}'
+			    state "volume", action:"setVolume", label:"${currentValue}"
 				}
 			standardTile("volumedown", "device.speech", inactiveLabel: false, decoration: "flat") 
 				{
@@ -130,9 +131,29 @@ metadata {
 				{
 				state "default", label:'Screen Refresh', action:"refresh"
 				}
+			main ('speak')	
 			}
 		}	
 	}
+
+def parse(String description) {
+	if (isSmartThings)
+		{	
+		def logprefix = "[parse]"
+		logger(logprefix+' '+description,"trace")
+		def map
+		map = stringToMap(description)
+		def headerString = new String(map.headers.decodeBase64())
+		logger(logprefix+' headers:'+headerString,'trace')
+		if (!headerString.contains("200 OK")) 
+			{
+			def bodyString = new String(map.body.decodeBase64())
+			logger (logprefix+' '+headerString+' '+bodyString,'error')  
+			}
+		}	
+	}
+
+
 // *** [ Initialization Methods ] *********************************************
 def installed() {
 	def logprefix = "[installed] "
