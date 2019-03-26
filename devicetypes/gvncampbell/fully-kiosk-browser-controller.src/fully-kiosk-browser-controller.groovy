@@ -11,16 +11,25 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
- *	Mar 24, 2019 V1.05 Arn Burkhoff: Update to 1.05 Hubitat version level. Add setScreenBrightness
- *	Mar 23, 2019 V1.04 Arn Burkhoff: Update to 1.04 Hubitat version level.
- *	Mar 22, 2019 V1.00 Arn Burkhoff: Add chime command giving partial Lannouncer compatability.
- *  Mar 22, 2019 v1.00 Arn Burkhoff: Port to Smarthings from Hubitat
+ *	Mar 25, 2019       Arn Burkhoff: Add some really messed up Tiles code, it mostly works.
+ *										note keep sendEvent before the sendCommand slider does not impact remotte device
+ *	Mar 24, 2019 	   Arn Burkhoff: Compatability with SmartThings and Hubitat in a single module instance
+ *	Mar 24, 2019 V1.05 Gavin Campbell: Update to 1.05 Hubitat version level. Add setScreenBrightness
+ *	Mar 23, 2019 V1.04 Gavin Campbell: Update to 1.04 Hubitat version level.
+ *	Mar 22, 2019 	   Arn Burkhoff: Add chime command giving partial Lannouncer compatability.
+ *  Mar 22, 2019 	   Arn Burkhoff: Port to Smarthings from Hubitat
  *	Mar 21, 2019 V1.00 Gavin Campbell: Released on Hubitat
  */
+
 metadata {
     definition (name: "Fully Kiosk Browser Controller", namespace: "GvnCampbell", author: "Gavin Campbell", importUrl: "https://github.com/GvnCampbell/Hubitat/blob/master/Drivers/FullyKioskBrowserController.groovy") {
 		capability "Tone"
-		capability "Speech Synthesis"
+		if (isSmartThings())
+			{
+			capability "Speech Synthesis"
+			}
+		else
+			capability "SpeechSynthesis"
 		capability "AudioVolume"
         capability "Refresh"
 		capability "Actuator"
@@ -44,19 +53,106 @@ metadata {
 		input(name:"appPackage",type:"string",title:"Application to Launch",defaultValue:"",required:false)
 		input(name:"loggingLevel",type:"enum",title:"Logging Level",description:"Set the level of logging.",options:["none","debug","trace","info","warn","error"],defaultValue:"debug",required:true)
     }
-    tiles
-    	{
-        standardTile("speak", "device.speech", inactiveLabel: false, decoration: "flat") 
-        	{
-            state "default", label:'Speak', action:"Speech Synthesis.speak", icon:"st.Electronics.electronics13"
-        	}
-        standardTile("beep", "device.tone", inactiveLabel: false, decoration: "flat")
-        	{
-            state "default", label:'Tone', action:"tone.beep", icon:"st.Entertainment.entertainment2"
-        	}
-    	}
+	if (isSmartThings())
+		{
+		tiles
+			{
+			standardTile("screenOn", "device.switch", inactiveLabel: false, decoration: "flat") 
+				{
+				state "default", label:'Screen On', action:"screenOn", backgroundColor: "#00a0dc"
+				}
+			controlTile("levelSliderControl", "device.levelx", "slider", height: 1,
+	             width: 1, inactiveLabel: false, range:"(0..255)")
+	            {
+			    state "levelx", action:"setScreenBrightness", label:'${currentValue}'
+				}
+			standardTile("screenOff", "device.switch", inactiveLabel: false, decoration: "flat") 
+				{
+				state "default", label:'Screen Off', action:"screenOff", backgroundColor: "#ffffff"
+				}
+			standardTile("speak", "device.speech", inactiveLabel: false, decoration: "flat") 
+				{
+				state "default", label:'Speak', action:"Speech Synthesis.speak", icon:"st.Electronics.electronics13"
+				}
+			standardTile("beep", "device.tone", inactiveLabel: false, decoration: "flat")
+				{
+				state "default", label:'Play Beep', action:'beep', inactiveLabel:false, decoration: "flat"
+				}
+			standardTile("launchapp", "device.speech", inactiveLabel: false, decoration: "flat") 
+				{
+				state "default", label:'Launch App', action:"launchAppPackage"
+				}
+			standardTile("fullyfront", "device.speech", inactiveLabel: false, decoration: "flat") 
+				{
+				state "default", label:'Fully to Front', action:"bringFullyToFront"
+				}
+			standardTile("setmotion", "device.speech", inactiveLabel: false, decoration: "flat") 
+				{
+				state "default", label:'Trigger Motion', action:"triggerMotion"
+				}
+			standardTile("saverOn", "device.switch", inactiveLabel: false, decoration: "flat") 
+				{
+				state "default", label:'Screen Saver On', action:"startScreensaver", backgroundColor: "#00a0dc"
+				}
+			standardTile("saverOff", "device.switch", inactiveLabel: false, decoration: "flat") 
+				{
+				state "default", label:'Screen Saver Off', action:"stopScreensaver"
+				}
+			standardTile("loadUrl", "device.switch", inactiveLabel: false, decoration: "flat") 
+				{
+				state "default", label:'Load Url', action:"loadURL"
+				}
+			standardTile("loadStartUrl", "device.switch", inactiveLabel: false, decoration: "flat") 
+				{
+				state "default", label:'Load Start URL', action:"loadStartURL"
+				}
+			standardTile("Mute", "device.switch", inactiveLabel: false, decoration: "flat") 
+				{
+				state "default", label:'Mute', action:"mute"
+				}
+			standardTile("Unmute", "device.switch", inactiveLabel: false, decoration: "flat") 
+				{
+				state "default", label:'UnMute', action:"unmute"
+				}
+			standardTile("volumeup", "device.speech", inactiveLabel: false, decoration: "flat") 
+				{
+				state "default", label:'Volume up 10%', action:"volumeUp"
+				}
+			controlTile("volumeSliderControl", "device.volume", "slider", height: 1,
+	             width: 1, inactiveLabel: false, range:"(0..100)")
+	            {
+			    state "volume", action:"setVolume", label:"${currentValue}"
+				}
+			standardTile("volumedown", "device.speech", inactiveLabel: false, decoration: "flat") 
+				{
+				state "default", label:'Volume down 10%', action:"volumeDown"
+				}
+			standardTile("refresh", "device.speech", inactiveLabel: false, decoration: "flat") 
+				{
+				state "default", label:'Screen Refresh', action:"refresh"
+				}
+			main ('speak')	
+			}
+		}	
+	}
 
-}
+def parse(String description) {
+	if (isSmartThings)
+		{	
+		def logprefix = "[parse]"
+		logger(logprefix+' '+description,"trace")
+		def map
+		map = stringToMap(description)
+		def headerString = new String(map.headers.decodeBase64())
+		logger(logprefix+' headers:'+headerString,'trace')
+		if (!headerString.contains("200 OK")) 
+			{
+			def bodyString = new String(map.body.decodeBase64())
+			logger (logprefix+' '+headerString+' '+bodyString,'error')  
+			}
+		}	
+	}
+
 
 // *** [ Initialization Methods ] *********************************************
 def installed() {
@@ -104,7 +200,9 @@ def screenOff() {
 def setScreenBrightness(value) {
 	def logprefix = "[setScreenBrightness] "
 	logger(logprefix+"value:${value}","trace")
+	sendEvent([name:"levelx",value:value])
 	sendCommandPost("cmd=setStringSetting&key=screenBrightness&value=${value}")
+
 }
 def triggerMotion() {
 	def logprefix = "[triggerMotion] "
@@ -121,7 +219,7 @@ def stopScreensaver() {
     logger(logprefix,"trace")
 	sendCommandPost("cmd=stopScreensaver")
 }
-def loadURL(url) {
+def loadURL(url='google.com') {
 	def logprefix = "[loadURL] "
 	logger(logprefix+"url:${url}","trace")
 	sendCommandPost("cmd=loadURL&url=${url}")
@@ -139,10 +237,10 @@ def speak(text="Fully Kiosk TTS Device Handler") {
 def setVolume(volumeLevel) {
 	def logprefix = "[setVolume] "
 	logger(logprefix+"volumeLevel:${volumeLevel}")
+	sendEvent([name:"volume",value:volumeLevel])
 	for (i=1;i<=10;i++) {
 		sendCommandPost("cmd=setAudioVolume&level=${volumeLevel}&stream=${i}")
 	}
-	sendEvent([name:"volume",value:volumeLevel])
 }
 def volumeUp() {
 	def logprefix = "[volumeUp] "
@@ -178,10 +276,30 @@ def refresh() {
 	sendCommandPost("cmd=deviceInfo")
 }
 
+// *** [ Platform Determination Methods ] *************************************
+private isSmartThings()
+	{ 
+	return (physicalgraph?.device?.HubAction)
+	}
+private isHubitat() 
+	{ 
+	return (hubitat?.device?.HubAction)
+	}
+
 // *** [ Communication Methods ] **********************************************
-/*
-def sendCommandPost(cmdDetails="") {
-	def logprefix = "[sendCommandPost] "
+def sendCommandPost(cmdDetails="")
+	{
+  	def logprefix = "[sendCommandPost] "
+  	logger logprefix
+	if (isSmartThings())
+		STsendCommandPost(cmdDetails)
+	else
+		HEsendCommandPost(cmdDetails)
+	}
+
+// [Hubitat Communications]****************************************************
+def HEsendCommandPost(cmdDetails="") {
+	def logprefix = "[HEsendCommandPost] "
 	logger(logprefix+"cmdDetails:${cmdDetails}","trace")
 	def postParams = [
 		uri: "http://${serverIP}:${serverPort}/?type=json&password=${serverPassword}&${cmdDetails}",
@@ -203,12 +321,11 @@ def sendCommandCallback(response, data) {
 		}
 	}
 }
-*/
 
 //	[SmartThing Communications] *********************************************** 
-def sendCommandPost(cmdDetails="") 
+def STsendCommandPost(cmdDetails="") 
 	{
-	def logprefix = "[sendCommandPost] "
+	def logprefix = "[STsendCommandPost] "
 	logger(logprefix+"cmdDetails:${cmdDetails} to ${serverIP}:${serverPort}","trace")
     if (serverIP?.trim()) 
     	{
@@ -218,7 +335,7 @@ def sendCommandPost(cmdDetails="")
         def headers = [:] 
         headers.put("HOST", "$serverIP:$serverPort")
         def method = "POST"
-        def hubAction = new physicalgraph.device.HubAction(
+	    def hubAction = physicalgraph.device.HubAction.newInstance(
             method: method,
             path: "/?type=json&password=${serverPassword}&${cmdDetails}",
             headers: headers
