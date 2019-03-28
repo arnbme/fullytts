@@ -169,7 +169,6 @@ def parse(String description) {
 		map = stringToMap(description)
 		def headerString = new String(map.headers.decodeBase64())
 		def bodyString = new String(map.body.decodeBase64())
-		log
 		logger(logprefix+' headers:'+headerString,'trace')
 		if (headerString.contains("200 OK"))
 			{
