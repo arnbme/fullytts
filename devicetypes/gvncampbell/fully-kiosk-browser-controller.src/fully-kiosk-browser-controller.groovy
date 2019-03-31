@@ -63,6 +63,8 @@ metadata {
 		input(name:"toneFile",type:"string",title:"Tone Audio File URL",defaultValue:"",required:false)
 		input(name:"alarmFile",type:"string",title:"Alarm Audio File URL",defaultValue:"",required:false)
 		input(name:"appPackage",type:"string",title:"Application to Launch",defaultValue:"",required:false)
+		if (isSmartThings())
+			input(name:"urlToLoad",type:"string",title:"URL to load",defaultValue:"google.com",required:false)
 		input(name:"loggingLevel",type:"enum",title:"Logging Level",description:"Set the level of logging.",options:["none","debug","trace","info","warn","error"],defaultValue:"debug",required:true)
     }
 	if (isSmartThings())
@@ -249,10 +251,30 @@ def stopScreensaver() {
     logger(logprefix,"trace")
 	sendCommandPost("cmd=stopScreensaver")
 }
-def loadURL(url='google.com') {
+def loadURL(url='') {
 	def logprefix = "[loadURL] "
-	logger(logprefix+"url:${url}","trace")
-	sendCommandPost("cmd=loadURL&url=${url}")
+	logger(logprefix+"entered","trace")
+	if (isSmartThings())
+		{
+		if (url>'')
+			{
+			logger(logprefix+"ST url:${url}","trace")
+			sendCommandPost("cmd=loadURL&url=${url}")
+			}
+		else
+		if (urlToLoad)
+			{	
+			logger(logprefix+"ST urlToLoad:"+urlToLoad,"trace")
+			sendCommandPost("cmd=loadURL&url="+urlToLoad)
+			}
+		else
+			logger(logprefix+"no url provided","error")
+		}
+	else
+		{
+		logger(logprefix+"HE url:${url}","trace")
+		sendCommandPost("cmd=loadURL&url=${url}")
+		}
 }
 def loadStartURL() {
 	def logprefix = "[loadStartURL] "
@@ -350,6 +372,10 @@ def stopSound()
 private isSmartThings()
 	{ 
 	return (physicalgraph?.device?.HubAction)
+//	if (!hubitat?.device?.HubAction)
+//		return true
+//	else
+//		return false
 	}
 private isHubitat() 
 	{ 
