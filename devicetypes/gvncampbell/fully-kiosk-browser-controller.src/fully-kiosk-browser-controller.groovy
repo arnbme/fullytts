@@ -11,6 +11,7 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
+ *	Mar 31, 2019       Arn Burkhoff; ST V2.02 Added setting urlToLoad and code to use it as default when no Url provided
  *	Mar 27, 2019       known issue SmartThings: Sliders don't update real time, and TTS Sound fails to adjust volume
  *	Mar 26, 2019       Arn Burkhoff: ST V2.02 same code runs on Smarthings and Fully
  *	Mar 25, 2019       Arn Burkhoff: ST V2.01 add Capability Alarm, alarm file and commands off, both, alarm
@@ -31,9 +32,13 @@ metadata {
 		if (isSmartThings())
 			{
 			capability "Speech Synthesis"
+			capability "Audio Notification"
 			}
 		else
+			{
 			capability "SpeechSynthesis"
+			capability "Audio Notification"
+			}
 		capability "AudioVolume"
         capability "Refresh"
 		capability "Actuator"
@@ -352,6 +357,7 @@ def alarm()
 	sendCommandPost("cmd=playSound&url=${alarmFile}&loop=true")
 	}
 // *** [Play Stop any sound file command]*******************************************
+def playTrack(track=""){playSound(track)} 
 def playSound(SoundFile="")
 	{
 	def logprefix = "[playSound] "
@@ -359,7 +365,11 @@ def playSound(SoundFile="")
     if (SoundFile>"")
 		sendCommandPost("cmd=playSound&url=${SoundFile}")
 	else 
+	if (toneFile>"")
 		sendCommandPost("cmd=playSound&url=${toneFile}")
+	else	
+		sendCommandPost("cmd=playSound&url=https://www.arnb.org/sounds/doorbell.mp3")
+
 	}
 def stopSound()
 	{
