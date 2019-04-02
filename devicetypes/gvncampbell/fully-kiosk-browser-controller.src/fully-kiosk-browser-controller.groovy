@@ -11,6 +11,8 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
+ *	Apr 01, 2019       Arn Burkhoff; ST V2.02 Added cabability Audio Notification, coded playTrack for testing
+ *						then disabled it not needed
  *	Mar 31, 2019       Arn Burkhoff; ST V2.02 Added setting urlToLoad and code to use it as default when no Url provided
  *	Mar 27, 2019       known issue SmartThings: Sliders don't update real time, and TTS Sound fails to adjust volume
  *	Mar 26, 2019       Arn Burkhoff: ST V2.02 same code runs on Smarthings and Fully
@@ -32,12 +34,12 @@ metadata {
 		if (isSmartThings())
 			{
 			capability "Speech Synthesis"
-			capability "Audio Notification"
+//			capability "Audio Notification"
 			}
 		else
 			{
 			capability "SpeechSynthesis"
-			capability "Audio Notification"
+//			capability "AudioNotification"
 			}
 		capability "AudioVolume"
         capability "Refresh"
