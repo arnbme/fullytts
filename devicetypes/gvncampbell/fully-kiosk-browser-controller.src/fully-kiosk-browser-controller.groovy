@@ -11,6 +11,8 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
+ *	Apr 05, 2019       Arn Burkhoff; ST V2.03 modify launchAppPackage allowing dynamic package name, if no parameter use
+ *									use input setting appPackage, otherwise log an error message
  *	Apr 01, 2019       Arn Burkhoff; ST V2.02 Added cabability Audio Notification, coded playTrack for testing
  *						then disabled it not needed
  *	Mar 31, 2019       Arn Burkhoff; ST V2.02 Added setting urlToLoad and code to use it as default when no Url provided
@@ -216,11 +218,30 @@ def beep() {
 	sendCommandPost("cmd=playSound&url=${toneFile}")
 }
 def chime() {beep()}
-def launchAppPackage() {
+def launchAppPackage(appName) {
 	def logprefix = "[launchAppPackage] "
-    logger(logprefix,"trace")
-	sendCommandPost("cmd=startApplication&package=${appPackage}")
-}
+	if (isSmartThings())
+		{
+		if (appName)
+			{
+			logger(logprefix+"ST appName:${appName}","trace")
+			sendCommandPost("cmd=startApplication&package=${appName}")
+			}
+		else
+		if (appPackage)
+			{	
+			logger(logprefix+"ST appPackage:"+appPackage,"trace")
+			sendCommandPost("cmd=startApplication&package=${appPackage}")
+			}
+		else
+			logger(logprefix+"no package name or setting provided","error")
+		}
+	else
+		{
+		logger(logprefix+"HE appPackage:${url}","trace")
+		sendCommandPost("cmd=startApplication&package=${appPackage}")
+		}
+	}
 def bringFullyToFront() {
 	def logprefix = "[bringFullyToFront] "
     logger(logprefix,"trace")
