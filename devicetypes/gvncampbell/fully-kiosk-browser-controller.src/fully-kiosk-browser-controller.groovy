@@ -11,6 +11,7 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
+ *	Feb 15, 2020      Arn Burkhoff; ST V2.04 add support for SSML adjustments and new Fully stopTextToSpeach command
  *	Apr 05, 2019       Arn Burkhoff; ST V2.03 modify launchAppPackage allowing dynamic package name, if no parameter use
  *									use input setting appPackage, otherwise log an error message
  *	Apr 01, 2019       Arn Burkhoff; ST V2.02 Added cabability Audio Notification, coded playTrack for testing
@@ -63,6 +64,7 @@ metadata {
 		command "alarm"
 		command "playSound",["String"]
 		command "stopSound"
+		command "stopTTS"
 
     }
 	preferences {
@@ -161,6 +163,10 @@ metadata {
 			standardTile("stopsound", "device.tone", inactiveLabel: false, decoration: "flat") 
 				{
 				state "default", label:'Stop Sound', action:'stopSound'
+				}
+			standardTile("stopTTS", "device.tone", inactiveLabel: false, decoration: "flat") 
+				{
+				state "default", label:'Stop TTS', action:'stopTTS'
 				}
 			standardTile("refresh", "device.tone", inactiveLabel: false, decoration: "flat") 
 				{
@@ -309,11 +315,26 @@ def loadStartURL() {
 	logger(logprefix,"trace")
 	sendCommandPost("cmd=loadStartURL")
 }
-def speak(text="Fully Kiosk TTS Device Handler") {
+
+def speak(text='!{speak}Fully Kiosk {break time="2000ms"/} TTS Device Handler{/speak}') 
+	{
 	def logprefix = "[speak] "
-	logger(logprefix+"text:${text}","trace")
-	sendCommandPost("cmd=textToSpeech&text=${java.net.URLEncoder.encode(text, "UTF-8")}")
-}
+	logger(logprefix+"text:${text}","info")
+	def wktext=text
+	if (wktext.startsWith("!"))
+		{
+		stopTTS()
+		stopSound()
+    	wktext=wktext.substring(1)	
+		}
+    wktext=wktext.replaceAll('[{]','<')	
+	wktext=wktext.replaceAll('[}]','>')	
+
+	sendCommandPost("cmd=textToSpeech&text=${java.net.URLEncoder.encode(wktext, "UTF-8")}")
+//	def sound = textToSpeech(wktext)		//currently used in Hubitat version cannot make it work with embedded SSML in ST
+//	playSound(sound.uri)
+	}
+	
 def setVolume(volumeLevel) {
 	def logprefix = "[setVolume] "
 	logger(logprefix+"volumeLevel:${volumeLevel}")
@@ -399,6 +420,13 @@ def stopSound()
 	def logprefix = "[stopSound] "
     logger(logprefix,"trace")
 	sendCommandPost("cmd=stopSound")
+	}
+
+def stopTTS()
+	{
+	def logprefix = "[stopTTS] "
+    logger(logprefix,"trace")
+	sendCommandPost("cmd=stopTextToSpeech")
 	}
 
 // *** [ Platform Determination Methods ] *************************************
