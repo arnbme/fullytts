@@ -11,6 +11,9 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
+ *	Mar 03, 2020      Arn Burkhoff; ST V2.05 Port commands Added setBooleanSetting, setStringSetting  from HE 
+ *	Feb 19, 2020      Arn Burkhoff; ST V2.04 add support for new sendTextToSpeech queue parameter
+ *	Feb 15, 2020      Arn Burkhoff; ST V2.04 add support for SSML adjustments, new Fully stopTextToSpeach command
  *	Apr 05, 2019       Arn Burkhoff; ST V2.03 modify launchAppPackage allowing dynamic package name, if no parameter use
  *									use input setting appPackage, otherwise log an error message
  *	Apr 01, 2019       Arn Burkhoff; ST V2.02 Added cabability Audio Notification, coded playTrack for testing
@@ -63,7 +66,19 @@ metadata {
 		command "alarm"
 		command "playSound",["String"]
 		command "stopSound"
-
+		command "stopTTS"
+		if (isSmartThings())
+			{
+			command "setBooleanSetting",["String","String"]
+			command "setStringSetting",["String","String"]
+			}
+		else
+			{
+        	command "setBooleanSetting",[[name:"Key*",type:"STRING",description:"The key value associated with the setting to be updated."],
+                                     [name:"Value*:",type:"ENUM",constraints:["true","false"],desciption:"The setting to be applied."]]
+        	command "setStringSetting",[[name:"Key*",type:"STRING",description:"The key value associated with the setting to be updated."],
+                                     [name:"Value*:",type:"STRING",desciption:"The setting to be applied."]]
+			}
     }
 	preferences {
 		input(name:"serverIP",type:"string",title:"Server IP Address",defaultValue:"",required:true)
@@ -161,6 +176,10 @@ metadata {
 			standardTile("stopsound", "device.tone", inactiveLabel: false, decoration: "flat") 
 				{
 				state "default", label:'Stop Sound', action:'stopSound'
+				}
+			standardTile("stopTTS", "device.tone", inactiveLabel: false, decoration: "flat") 
+				{
+				state "default", label:'Stop TTS', action:'stopTTS'
 				}
 			standardTile("refresh", "device.tone", inactiveLabel: false, decoration: "flat") 
 				{
@@ -309,11 +328,25 @@ def loadStartURL() {
 	logger(logprefix,"trace")
 	sendCommandPost("cmd=loadStartURL")
 }
-def speak(text="Fully Kiosk TTS Device Handler") {
+
+def speak(text='!{speak}Fully Kiosk {break time="2000ms"/} TTS Device Handler{/speak}') 
+	{
 	def logprefix = "[speak] "
-	logger(logprefix+"text:${text}","trace")
-	sendCommandPost("cmd=textToSpeech&text=${java.net.URLEncoder.encode(text, "UTF-8")}")
-}
+	logger(logprefix+"text:${text}","info")
+    def wktext=text.replaceAll('[{]','<')	
+	wktext=wktext.replaceAll('[}]','>')	
+	if (wktext.startsWith("!"))
+		{
+		sendCommandPost("cmd=textToSpeech&queue=0&text=${java.net.URLEncoder.encode(wktext.substring(1), "UTF-8")}")
+		}
+	else
+		{
+		sendCommandPost("cmd=textToSpeech&text=${java.net.URLEncoder.encode(wktext, "UTF-8")}")
+		}
+//	def sound = textToSpeech(wktext)		//currently used in Hubitat version cannot make it work with embedded SSML in ST
+//	playSound(sound.uri)
+	}
+	
 def setVolume(volumeLevel) {
 	def logprefix = "[setVolume] "
 	logger(logprefix+"volumeLevel:${volumeLevel}")
@@ -400,6 +433,26 @@ def stopSound()
     logger(logprefix,"trace")
 	sendCommandPost("cmd=stopSound")
 	}
+
+def stopTTS()
+	{
+	//	Terminates currently speaking TTS message, and purges the message queue
+	def logprefix = "[stopTTS] "
+    logger(logprefix,"trace")
+ 	sendCommandPost("cmd=stopTextToSpeech")
+	}
+	
+def setBooleanSetting(key,value) {
+	def logprefix = "[setBooleanSetting] "
+    logger(logprefix+"key,value: ${key},${value}","trace")
+    sendCommandPost("cmd=setBooleanSetting&key=${key}&value=${value}")
+}
+def setStringSetting(key,value) {
+	def logprefix = "[setBooleanSetting] "
+    logger(logprefix+"key,value: ${key},${value}","trace")
+    sendCommandPost("cmd=setBooleanSetting&key=${key}&value=${java.net.URLEncoder.encode(value,"UTF-8")}")
+}
+	
 
 // *** [ Platform Determination Methods ] *************************************
 private isSmartThings()
