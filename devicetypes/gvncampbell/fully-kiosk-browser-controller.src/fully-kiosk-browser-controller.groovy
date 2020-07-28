@@ -11,6 +11,7 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
+ *  Jul 28, 2020	  Steven Dale(TMLeafs); ST V2.06 Added Restart Fully Browser
  *	Mar 03, 2020      Arn Burkhoff; ST V2.05 Port commands Added setBooleanSetting, setStringSetting  from HE 
  *	Feb 19, 2020      Arn Burkhoff; ST V2.04 add support for new sendTextToSpeech queue parameter
  *	Feb 15, 2020      Arn Burkhoff; ST V2.04 add support for SSML adjustments, new Fully stopTextToSpeach command
@@ -54,6 +55,7 @@ metadata {
 			attribute "volume","number"
 		command "launchAppPackage"
 		command "bringFullyToFront"
+        command "restartApp"
 		command "screenOn"
 		command "screenOff"
 		command "triggerMotion"
@@ -185,6 +187,10 @@ metadata {
 				{
 				state "default", label:'Screen Refresh', action:"refresh"
 				}
+            standardTile("restartApp", "device.switch", inactiveLabel: false, decoration: "flat") 
+				{
+				state "default", label:'Restart App', action:"restartApp"
+				}
 			main ('speak')	
 			}
 		}	
@@ -265,6 +271,11 @@ def bringFullyToFront() {
 	def logprefix = "[bringFullyToFront] "
     logger(logprefix,"trace")
 	sendCommandPost("cmd=toForeground")
+}
+def restartApp() {
+	def logprefix = "[restartApp] "
+    logger(logprefix,"trace")
+	sendCommandPost("cmd=restartApp")
 }
 def screenOn() {
 	def logprefix = "[screenOn] "
